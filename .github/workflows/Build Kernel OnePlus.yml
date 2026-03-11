@@ -988,7 +988,7 @@ jobs:
 
           # 修复构建问题
           if [ "$KERNEL_VERSION" = "6.1" ] && [[ "$CPU" == mt* ]]; then
-            echo "CONFIG_DEBUG_INFO_BTF=n" >> "$CONFIG_FILE"
+            echo "CONFIG_DEBUG_INFO_BTF=y" >> "$CONFIG_FILE"
           fi
           if [[ "$ENABLE_RUST" == "true" ]]; then
             echo "CONFIG_RUST=y" >> "$CONFIG_FILE"
@@ -1141,6 +1141,15 @@ jobs:
             MAKE_ARGS=(RUSTC=../../prebuilts/rust/linux-x86/$RUSTC_VERSION/bin/rustc "${MAKE_ARGS[@]}")
           fi
           make O=out "${MAKE_ARGS[@]}" gki_defconfig
+          scripts/config --file out/.config -e DEBUG_INFO
+scripts/config --file out/.config -e DEBUG_INFO_DWARF4
+scripts/config --file out/.config -e DEBUG_INFO_BTF
+scripts/config --file out/.config -e BPF
+scripts/config --file out/.config -e BPF_SYSCALL
+scripts/config --file out/.config -d DEBUG_INFO_REDUCED
+scripts/config --file out/.config -d DEBUG_INFO_SPLIT
+
+make O=out "${MAKE_ARGS[@]}" olddefconfig
           if [[ "$KERNEL_VERSION" == "5.10" || "$KERNEL_VERSION" == "5.15" ]]; then
             echo ">> 设置 LTO = thin"
             scripts/config --file out/.config -e LTO_CLANG
@@ -1156,7 +1165,7 @@ jobs:
             scripts/config --file out/.config -d LTO_CLANG_THIN
             scripts/config --file out/.config -d LTO_CLANG_FULL
           fi
-          make O=out "${MAKE_ARGS[@]}" olddefconfig
+make O=out "${MAKE_ARGS[@]}" olddefconfig
           make -j"$(nproc --all)" O=out "${MAKE_ARGS[@]}"
           ccache -s
 
